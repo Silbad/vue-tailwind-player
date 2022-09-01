@@ -7,13 +7,60 @@
         :loop="isLoop"
         :muted="isMuted"
     ></audio>
-    <div :class="twPlayer" v-if="!native">
-        <div :class="twGroupPlayback">
+    <div
+        :class="`
+            w-full
+            flex flex-wrap
+            rounded-md
+            bg-white
+            p-4 xl:p-8
+            shadow
+            shadow-${tailwindSettings.theme.primary}-800
+            ${debug ? 'debug' : ''}
+            `"
+        v-if="!native"
+    >
+        <!-- CURRENT TIME -->
+        <div class="w-1/2 text-left text-indigo-900 order-3 xl:order-2 my-2 select-none">
+            {{ timeCurrent }}
+        </div>
+
+        <!-- TIME RANGE -->
+        <div class="w-full order-2 xl:order-1 mt-4 xl:mt-0">
+        <input
+            class="
+                w-full
+                appearance-none
+                h-2
+                bg-indigo-100
+                rounded-full
+                cursor-pointer
+            "
+            type="range"
+            :value="audioElement ? audioElement.currentTime : '0'"
+            min="0"
+            :max="audioElement ? audioElement.duration : '0'"
+            step="1"
+            @focus="play(false, stayPaused)"
+            @input="setCurrentTime($event)"
+            @change="$event.target.blur()"
+            @blur="play(true, stayPaused)"
+        />
+        </div>
+
+        <!-- REMAINING TIME -->
+        <div class="w-1/2 text-right text-indigo-900 order-4 xl:order-3 my-2 select-none">
+            {{ timeRemaining }}
+        </div>
+
+        <!-- GROUP PLAYER ACTIONS -->
+        <div class="w-full xl:w-1/3 flex flex-wrap xl:flex-nowrap justify-start items-center order-5 xl:order-4">
+
             <!-- Button Play / Pause -->
-            <div :class="twButtonPlayPause">
+            <div class="flex text-slate-900 w-full xl:w-auto justify-center xl:justify-start">
                 <button @click="play(!isPlaying, null)">
                     <svg
-                        :class="twButtonPlaySVG"
+                        class="w-16 h-16 fill-slate-900"
                         stroke-width="1.5"
                         viewBox="0 0 24 24"
                         fill="none"
@@ -28,7 +75,7 @@
                         />
                     </svg>
                     <svg
-                        :class="twButtonPauseSVG"
+                        class="w-16 h-16 fill-slate-900"
                         stroke-width="1.5"
                         viewBox="0 0 24 24"
                         fill="none"
@@ -48,14 +95,15 @@
                     </svg>
                 </button>
             </div>
+
             <!-- Button Loop -->
-            <div :class="twButtonLoop">
+            <div class="flex ml-4 text-indigo-900 transition hover:scale-110">
                 <button
                     @click="toggleLoop()"
-                    :class="!isLoop ? 'opacity-50' : null"
+                    :class="!isLoop ? 'text-indigo-100' : null"
                 >
                     <svg
-                        :class="twButtonLoopSVG"
+                        class="w-10 h-10"
                         stroke-width="1.5"
                         viewBox="0 0 24 24"
                         fill="none"
@@ -76,11 +124,14 @@
                     </svg>
                 </button>
             </div>
+
             <!-- Button Download -->
-            <div :class="twButtonDownload" v-if="download">
+            <div class="flex ml-4 text-indigo-900 transition hover:scale-110"
+                v-if="download"
+            >
                 <a :href="source" download>
                     <svg
-                        :class="twButtonDownloadSVG"
+                        class="w-10 h-10"
                         stroke-width="1.5"
                         viewBox="0 0 24 24"
                         fill="none"
@@ -102,13 +153,20 @@
                 </a>
             </div>
         </div>
-        <div :class="twVisualizer" v-if="visualizer">
-            <canvas ref="canvasElement" :class="twVisualizerCanvas"></canvas>
+
+        <!-- VISUALIZER -->
+        <div class="w-full xl:w-1/3 flex justify-center items-center order-1 xl:order-5"
+            v-if="visualizer"
+        >
+            <canvas ref="canvasElement" class="w-full h-16 rounded-md"></canvas>
         </div>
-        <div :class="twGroupVolume">
+
+        <!-- GROUP VOLUME -->
+        <div class="w-full xl:w-1/3 flex text-indigo-900 justify-end items-center order-6 xl:order-6"
+        >
             <button @click="toggleMuted()">
                 <svg
-                    :class="twButtonVolumeSVG"
+                    class="w-10 h-10 transition hover:scale-110"
                     stroke-width="1.5"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -191,7 +249,15 @@
                 </svg>
             </button>
             <input
-                :class="twVolume"
+                class="
+                    appearance-none
+                    h-2
+                    ml-2
+                    bg-indigo-100
+                    rounded-full
+                    cursor-pointer
+                    order-0
+                "
                 type="range"
                 :value="audioElement ? audioElement.volume : 1"
                 min="0"
@@ -200,20 +266,6 @@
                 @input="setCurrentVolume($event)"
             />
         </div>
-        <div :class="twTimeCurrent">{{ timeCurrent }}</div>
-        <input
-            :class="twTimeline"
-            type="range"
-            :value="audioElement ? audioElement.currentTime : '0'"
-            min="0"
-            :max="audioElement ? audioElement.duration : '0'"
-            step="1"
-            @focus="play(false, stayPaused)"
-            @input="setCurrentTime($event)"
-            @change="$event.target.blur()"
-            @blur="play(true, stayPaused)"
-        />
-        <div :class="twTimeRemaining">{{ timeRemaining }}</div>
     </div>
 </template>
 
@@ -255,87 +307,29 @@ export default {
             type: String,
             default: null,
         },
-        twPlayer: {
-            type: String,
-            default: "w-full flex flex-wrap bg-green-200 rounded-2xl py-6 px-8",
-        },
-        twGroupPlayback: {
-            type: String,
-            default: "w-1/3 flex justify-start items-center order-3",
-        },
-        twButtonPlayPause: {
-            type: String,
-            default: "flex text-green-600",
-        },
-        twButtonPlaySVG: {
-            type: String,
-            default: "w-16 h-16 fill-green-600",
-        },
-        twButtonPauseSVG: {
-            type: String,
-            default: "w-16 h-16 fill-green-600",
-        },
-        twButtonLoop: {
-            type: String,
-            default: "flex ml-4 text-green-600 transition hover:scale-110",
-        },
-        twButtonLoopSVG: {
-            type: String,
-            default: "w-10 h-10",
-        },
-        twButtonDownload: {
-            type: String,
-            default: "flex ml-4 text-green-600 transition hover:scale-110",
-        },
-        twButtonDownloadSVG: {
-            type: String,
-            default: "w-10 h-10",
-        },
-        twVisualizer: {
-            type: String,
-            default: "w-1/3 flex justify-center items-center order-4",
-        },
-        twVisualizerCanvas: {
-            type: String,
-            default: "w-full h-16 rounded-md",
-        },
         twVisualizerCanvasColors: {
             type: Object,
             default: {
-                primary: "rgb(22, 163, 74)",
-                secondary: "rgb(187, 247, 208)",
+                theme: {
+                    primary: "rgb(224, 231, 255)",
+                    secondary: "rgb(15, 23, 42)",
+                },
             },
         },
-        twGroupVolume: {
-            type: String,
-            default:
-                "w-1/3 flex text-green-600 justify-end items-center order-5",
+        tailwindSettings: {
+            type: Object,
+            default: {
+                theme: {
+                    primary: "slate",
+                    secondary: "indigo",
+                },
+                shadow: "shadow",
+                rounded: "rounded",
+            },
         },
-        twButtonVolumeSVG: {
-            type: String,
-            default: "w-10 h-10 transition hover:scale-110",
-        },
-        twVolume: {
-            type: String,
-            default:
-                "appearance-none h-2 ml-2 bg-green-300 rounded-full cursor-pointer order-0 ",
-        },
-        twTimeCurrent: {
-            type: String,
-            default: "w-1/2 text-left text-green-900 order-1 my-2 select-none",
-        },
-        twTimeline: {
-            type: String,
-            default:
-                "w-full appearance-none h-2 bg-green-300 rounded-full cursor-pointer order-0",
-        },
-        twTimeRemaining: {
-            type: String,
-            default: "w-1/2 text-right text-green-600 order-2 my-2 select-none",
-        },
-        twTimelineThumb: {
-            type: String,
-            default: "",
+        debug: {
+            type: Boolean,
+            default: false,
         },
     },
     setup(props) {
@@ -404,7 +398,7 @@ export default {
                     analyser.getFloatFrequencyData(dataArray);
 
                     canvasContext.fillStyle =
-                        props.twVisualizerCanvasColors.primary;
+                        props.twVisualizerCanvasColors.theme.primary;
                     canvasContext.fillRect(0, 0, width, height);
 
                     var barWidth = (width / bufferLength) * 2.5;
@@ -415,7 +409,7 @@ export default {
                         barHeight = (dataArray[i] + 140) * 2;
 
                         const colorString =
-                            props.twVisualizerCanvasColors.secondary;
+                            props.twVisualizerCanvasColors.theme.secondary;
                         const arrayRGB = colorString
                             .substring(
                                 colorString.indexOf("(") + 1,
@@ -423,9 +417,9 @@ export default {
                             )
                             .split(/,\s*/);
 
-                        let alpha = ((barHeight * 100) / height);
-                        alpha = alpha < 0 ? 0 : (alpha / 100);
-                 
+                        let alpha = (barHeight * 100) / height;
+                        alpha = alpha < 0 ? 0 : alpha / 100;
+
                         canvasContext.fillStyle =
                             "rgba(" +
                             arrayRGB[0] +
@@ -433,7 +427,9 @@ export default {
                             arrayRGB[1] +
                             ", " +
                             arrayRGB[2] +
-                            ", " + alpha + ")";
+                            ", " +
+                            alpha +
+                            ")";
 
                         canvasContext.fillRect(
                             x,
@@ -450,12 +446,12 @@ export default {
                     analyser.getFloatTimeDomainData(dataArray);
 
                     canvasContext.fillStyle =
-                        props.twVisualizerCanvasColors.primary;
+                        props.twVisualizerCanvasColors.theme.primary;
                     canvasContext.fillRect(0, 0, width, height);
 
                     canvasContext.lineWidth = 2;
                     canvasContext.strokeStyle =
-                        props.twVisualizerCanvasColors.secondary;
+                        props.twVisualizerCanvasColors.theme.secondary;
 
                     canvasContext.beginPath();
 
@@ -558,21 +554,22 @@ export default {
 <style scoped>
 input[type="range"]::-moz-range-progress,
 input[type="range"]::-webkit-range-value {
-    @apply h-2 rounded-full bg-green-600;
+    @apply h-2 rounded-full bg-indigo-600;
 }
 
 input[type="range"]::-moz-range-thumb,
 input[type="range"]::-webkit-slider-thumb {
-    @apply appearance-none w-5 h-5 border-0 rounded-full bg-green-600 shadow;
+    @apply appearance-none w-5 h-5 border-0 rounded-full bg-indigo-600 shadow;
 }
-/* div {
+
+.debug div {
     border: 1px solid red !important;
 }
-button,
-input {
+.debug button,
+.debug input {
     border: 1px solid blue !important;
 }
-canvas {
+.debug canvas {
     border: 1px solid orange !important;
-} */
+}
 </style>

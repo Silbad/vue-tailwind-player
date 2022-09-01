@@ -9,6 +9,9 @@ export default defineConfig({
         vue(),
     ],
     base: '/vue-tailwind-player/',
+    build: {
+        outDir: '../../gh-pages/vue-tailwind-player/',
+    },
     define: {
         __APP_VERSION__: JSON.stringify(process.env.npm_package_version)
     },
